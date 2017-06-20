@@ -154,72 +154,57 @@ void my_string_destroy(MY_STRING* phMy_string)
 // and failure otherwise. Remember that the incoming string may already
 // contain some data and this function should replace the data but not
 // necessarily resize the array unless needed.
+// This code is adapted from:
+// https://github.com/DPC15038/Evil-Hangman/blob/master/my_string.c
 
-Status my_string_extraction(MY_STRING hMy_string, FILE* fp)
+Status my_string_extraction(MY_STRING hMy_string, FILE* fp) 
 {
-
+	int num_of_conversions, i, count = 0;
 	char c;
-	int j, actualChar; 
-	int i = 0;
-
+	char* tempArray;
 	My_String* pStr = (My_String*)hMy_string;
 
-	// overwrite the characters already present to reset.
-	for(j = 0; j < pStr->size+2; j++)
-	{
-		pStr->data[j] = '\0';
-	} 
+	num_of_conversions = fscanf(fp, " %c", &c);
 
-	// reset the size pointer
-	pStr->size = 0;
-	j = 0;
-	// Do nothing with leading white space
-	while((c = fgetc(fp)) != EOF)
-	{
-		// test for the first alphanumeric character
-		if( isalpha(c) )
-		{
-			actualChar = 1; // determine when we have characters
-		}
+	// 
+	if (num_of_conversions == 1 && num_of_conversions != EOF) {
 
-		// This goes through the characters and the size.
-		if( actualChar == 1 )
+		// stop conditions
+		while (c != ' ' && c != EOF && c != '\n') 
 		{
-			pStr->data[i] = c;
-			//printf("%s", pStr->data);
-			
-			// adjust the size of each word
-			pStr->size = pStr->size+1;
-		
-		}
-		
-		// resize if size equals capacity
-		if(pStr->size >= pStr->capacity)
-		{
-			pStr->data = (char*)realloc(pStr->data, sizeof(char)*2*pStr->capacity);
-			if(pStr->data == NULL)
-			{
-				return FAILURE;
+			pStr->data[count] = c;
+			pStr->size = count + 1;
+			count++;
+
+			// resize when capacity equals size
+			if (pStr->capacity <= pStr->size) {
+				tempArray = (char*)malloc(sizeof(char) * 2 * pStr->capacity);
+				if (tempArray == NULL) {
+					free(tempArray);
+				}
+
+				// copy to new array previously in data
+				for (i = 0; i < pStr->capacity; i++) {
+					tempArray[i] = pStr->data[i];
+				}
+				// free old data
+				free(pStr->data); 
+				pStr->data = NULL;
+
+				// make temp memory equal to data
+				pStr->data = tempArray;
+				tempArray = NULL;
+				pStr->capacity *= 2;  // adjust size of capacity
 			}
-			pStr->capacity = pStr->capacity * 2;
-		
+			// get next character
+			c = fgetc(fp);
 		}
-
-		// handle blank space characters
-		if( actualChar == 1 &&  (c == ' ') )
-		{
-			ungetc(c, fp); 	// return the character to fp
-			pStr->size = pStr->size-1;	// account for the last character
-
-			return SUCCESS;
-		}
-
+		// put the end condition data back into fp
+		ungetc(c, fp);
+		return SUCCESS;
 	}
-	printf("%s", pStr->data);
-
-	return SUCCESS;
+	return FAILURE;
 }
-
 
 // Precondition: hMy_string is the handle to a valid My_string object.
 // Postcondition: Writes the characters contained in the string object indicated
@@ -229,9 +214,13 @@ Status my_string_extraction(MY_STRING hMy_string, FILE* fp)
 Status my_string_insertion(MY_STRING hMy_string, FILE* fp)
 {
 	My_String* pStr = (My_String*)hMy_string;
+	int i;
 
-	printf("%s", pStr->data);
-	//fputs(pStr->data, fp);
+	// print the character stored in data
+	for(i = 0; i < pStr->size; i++)
+	{
+		fprintf(fp, "%c", pStr->data[i]);
+	}
 
 	return SUCCESS;
 }
