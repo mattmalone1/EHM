@@ -38,6 +38,7 @@ MY_STRING my_string_init_default(void)
 /* My version of a sizing function that returns how long a string is
 	The folloing code is based on code from The C Programming Language
 	by Kernighan and Ritchie	*/
+// String is not NULL terminated so his doesn't work.
 int string_size(const char* string)
 {
 	const char *temp = string;
@@ -134,9 +135,39 @@ void my_string_destroy(MY_STRING* phMy_string)
 	*phMy_string = NULL;
 }
 
+/* resize the string capacity to twice the size. This set of code is 
+	repetitive so for efficiency sake it is better to make it its
+	own function.  */
+
+void my_resize(My_String* pStr)
+{
+	char* temp;
+	int i;
+
+	temp = (char*)malloc(sizeof(char) * 2 * pStr->capacity);
+		if (temp == NULL) {
+			free(temp);
+			return;
+		}
+
+		// copy to new array previously in data
+		for (i = 0; i < pStr->capacity; i++) {
+			temp[i] = pStr->data[i];
+		}
+		// free old data
+		free(pStr->data); 
+		pStr->data = NULL;
+
+		// make temp memory equal to data
+		pStr->data = temp;
+		temp = NULL;
+		pStr->capacity *= 2;  // adjust size of capacity
+		return;
+}
+
 // Precondition: hMy_string is the handle to a valid My_string object.
 
-// Postcondition: hMy_string will be the handle of a string object that contains
+//Postcondition: hMy_string will be the handle of a string object that contains
 // the next string from the file stream fp according to the following rules.
 
 // 1) Leading whitespace will be ignored.
@@ -159,16 +190,16 @@ void my_string_destroy(MY_STRING* phMy_string)
 
 Status my_string_extraction(MY_STRING hMy_string, FILE* fp) 
 {
-	int num_of_conversions, i, count = 0;
+	int num_of_conversions, count = 0;
 	char c;
-	char* tempArray;
+	
 	My_String* pStr = (My_String*)hMy_string;
 
 	num_of_conversions = fscanf(fp, " %c", &c);
 
-	// 
-	if (num_of_conversions == 1 && num_of_conversions != EOF) {
-
+	// check the returned items
+	if (num_of_conversions == 1 && num_of_conversions != EOF) 
+	{
 		// stop conditions
 		while (c != ' ' && c != EOF && c != '\n') 
 		{
@@ -177,24 +208,13 @@ Status my_string_extraction(MY_STRING hMy_string, FILE* fp)
 			count++;
 
 			// resize when capacity equals size
-			if (pStr->capacity <= pStr->size) {
-				tempArray = (char*)malloc(sizeof(char) * 2 * pStr->capacity);
-				if (tempArray == NULL) {
-					free(tempArray);
+			if (pStr->capacity <= pStr->size) 
+			{
+				my_resize(pStr);
+				if (pStr->data == NULL) {
+					return FAILURE;
 				}
 
-				// copy to new array previously in data
-				for (i = 0; i < pStr->capacity; i++) {
-					tempArray[i] = pStr->data[i];
-				}
-				// free old data
-				free(pStr->data); 
-				pStr->data = NULL;
-
-				// make temp memory equal to data
-				pStr->data = tempArray;
-				tempArray = NULL;
-				pStr->capacity *= 2;  // adjust size of capacity
 			}
 			// get next character
 			c = fgetc(fp);
@@ -223,4 +243,150 @@ Status my_string_insertion(MY_STRING hMy_string, FILE* fp)
 	}
 
 	return SUCCESS;
+}
+
+// Precondition: hMy_string is the handle to a valid My_string object.
+// Postcondition: If successful, places the character item at the end of the 
+// string and returns SUCCESS. If the string does not have enough room and
+// cannot resize to accomidate the new character then the operation fails
+// and FAILURE is returned. The resize operation will attempt to amortize
+// the cost of a resize by making the string capacity somewhat larger than
+// it was before (up to 2 times bigger).
+
+Status my_string_push_back(MY_STRING hMy_string, char item)
+{
+	My_String* pStr = (My_String*)hMy_string;
+
+	if (pStr->capacity <= (pStr->size+1)) 
+	{
+		my_resize(pStr);
+		if (pStr->data == NULL) {
+			return FAILURE;
+		}
+	}
+
+	pStr->size = pStr->size+1;
+
+	pStr->data[pStr->size-1] = item;
+
+	return SUCCESS;
+}
+
+// Precondition: hMy_string is the handle to a valid My_string object.
+// Postcondition: Removes the last character of a string in constant time.
+// Guarenteed to not cause a resize operation of the internal data. Returns
+// SUCCESS on success and FAILURE if the string is empty.
+
+Status my_string_pop_back(MY_STRING hMy_string)
+{
+	My_String* pStr = (My_String*)hMy_string;
+
+	if(pStr->size == 0)
+	{
+		return FAILURE;
+	}
+	pStr->size = pStr->size-1;
+	return SUCCESS;
+}
+
+// Precondition: hMy_string is the handle to a valid My_string object.
+// Postcondition: Returns the address of the character located at the given
+// index if the index is in bounds but otherwise returns NULL. This address
+// is not usable as a c-string since the data is not NULL terminated and is
+// intended to just provide access to the element at that index.
+
+char* my_string_at(MY_STRING hMy_string, int index)
+{
+	My_String* pStr = (My_String*)hMy_string;
+
+	if(index > pStr->size-1 || index < 0)
+		return NULL;
+	else
+		return &pStr->data[index];
+}
+
+// Precondition: hMy_string is the handle to a valid My_string object.
+// Postcondition: Returns the address of the first element of the string object
+// for use as a c-string. The resulting c-string is guarenteed to be NULL
+// terminated and the memory is still maintained by the string object through
+// the NULL is not actually counted as part of the string (in size).
+
+char* my_string_c_str(MY_STRING hMy_string)
+{
+	My_String* pStr = (My_String*)hMy_string;
+
+	if(pStr->size+1 >= pStr->capacity)
+	{
+		my_resize(pStr);
+			if (pStr->data == NULL) {
+				return FAILURE;
+			}
+
+	}
+	if(pStr->size == 0)
+		return NULL;
+
+	pStr->data[pStr->size] = '\0';
+
+	return pStr->data;
+}
+
+// Precondition: hResult and hAppend are handles to valid My_string objects.
+// Postcondition: hResult is the handle of a string that containsthe original
+// hResult object followed by the hAppend object concatinated together. This
+// function should guarentee no change to the hAppend object and return
+// SUCCESS if they operaion is successful and FAILURE if the hResult object
+// is unable to accomidate the characters in the hAppend string perhaps
+// because of a failed resize operation. On FAILURE, no change to either
+// string should be made.
+
+Status my_string_concat(MY_STRING hResult, MY_STRING hAppend)
+{
+	char* temp;
+	int i, j;
+	// cast the void pointers into something usable.
+	My_String* pStr1 = (My_String*)hResult;
+	My_String* pStr2 = (My_String*)hAppend;
+
+	// Allocate new memory
+	temp = (char*)malloc(sizeof(char)*((pStr1->size)+(pStr2->size)));
+	if (temp == NULL) {
+		free(temp);
+		return FAILURE;
+	}
+	pStr1->capacity = ((pStr1->size)+(pStr2->size));
+	
+	// copy data from the two strings into temp
+	for(i = 0; i < pStr1->size; i++)
+	{
+		temp[i] = pStr1->data[i];
+	}
+	for(j = 0; j < pStr2->size; j++, i++)
+	{
+		temp[i] = pStr2->data[j];
+	}
+
+	// Set the cleanup data
+	free(pStr1->data);
+	pStr1->data = temp;
+	pStr1->size = i;
+
+	//printf("\n%d", pStr1->size);
+
+	return SUCCESS;
+
+}
+
+// Precondition: hMy_string is the handle to a valid My_string object.
+// Postcondition: Returns an enumerated type with value TRUE if the string
+// is empty and FALSE otherwise.
+
+Boolean my_string_empty(MY_STRING hMy_string)
+{
+	My_String* pStr = (My_String*)hMy_string;
+
+	if(pStr == NULL || pStr->size == 0)
+		return TRUE;
+	else
+		return FALSE;
 }
