@@ -83,7 +83,11 @@ MY_STRING my_string_init_c_string(const char* c_string)
 int my_string_get_capacity(MY_STRING hMy_string)
 {
 	My_String* pStr = (My_String*)hMy_string;
-	return pStr->capacity;
+
+	if (pStr == NULL || pStr->size == 0)
+		return 0;
+	else
+		return pStr->capacity;
 }
 
 // Precondition: hMy_string is the handle of a valid My_string object.
@@ -92,7 +96,11 @@ int my_string_get_capacity(MY_STRING hMy_string)
 int my_string_get_size(MY_STRING hMy_string)
 {
 	My_String* pStr = (My_String*)hMy_string;
-	return pStr->size;
+
+	if (pStr == NULL || pStr->size == 0)
+		return 0;
+	else
+		return pStr->size;
 }
 
 // Precondition: hLeft_string and hRight_string are valid My_string objects.
@@ -129,9 +137,14 @@ int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string)
 
 void my_string_destroy(MY_STRING* phMy_string)
 {
+	printf("%lu\n", phMy_string);
 	My_String* pStr = (My_String*)*phMy_string;
-	free(pStr->data);
-	free(pStr);
+	printf("%lu\n", pStr);
+	//free(pStr->data);
+	//pStr->data = NULL;
+
+	free(*phMy_string);
+	pStr = NULL;
 	*phMy_string = NULL;
 }
 
