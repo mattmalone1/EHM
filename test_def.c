@@ -40,7 +40,7 @@ Status test_get_size_on_init_default_returns_0(char* buffer, int length)
 		status=SUCCESS;
 		strncpy(buffer, "test_get_size_on_init_default_returns_0\n", length);
 	}
-	//printf("%d\n", &hString);
-	my_string_destroy(&hString);
+	
+	my_string_highlevel_destroy(&hString);
 	return status;
 }

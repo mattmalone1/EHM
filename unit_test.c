@@ -30,7 +30,6 @@ for(i=0; i < number_of_functions; i++)
 	}
 }
 
-printf("three");
 printf("Total number of tests: %d\n", number_of_functions);
 printf("%d/%d Pass, %d/%d Failure\n", success_count,
 	number_of_functions, failure_count, number_of_functions);

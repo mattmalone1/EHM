@@ -137,13 +137,30 @@ int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string)
 
 void my_string_destroy(MY_STRING* phMy_string)
 {
-	printf("%lu\n", phMy_string);
 	My_String* pStr = (My_String*)*phMy_string;
-	printf("%lu\n", pStr);
-	//free(pStr->data);
-	//pStr->data = NULL;
+	
+	free(pStr->data);
+	pStr->data = NULL;
 
-	free(*phMy_string);
+	free(pStr);
+	pStr = NULL;
+	*phMy_string = NULL;
+}
+
+// Precondition: phMy_string holds the address of a valid handle to a MY_STRING
+//  object.
+// Postcondition: The memory used fo the MY_STRING object has be reclaimed by
+//  the system and the handle referred to by the pointer phMy_string has been
+//  set to NULL.
+
+void my_string_highlevel_destroy(MY_STRING* phMy_string)
+{
+	My_String* pStr = (My_String*)*phMy_string;
+
+	// This function is necessary because not all test functions produce
+	// a valid malloced set of data memory.
+
+	free(pStr);
 	pStr = NULL;
 	*phMy_string = NULL;
 }
