@@ -33,3 +33,5 @@ char* my_string_c_str(MY_STRING hMy_string);
 Status my_string_concat(MY_STRING hResult, MY_STRING hAppend);
 
 Boolean my_string_empty(MY_STRING hMy_string);
+
+void my_string_assignment(Item* pLeft, Item Right);
