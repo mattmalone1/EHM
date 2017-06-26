@@ -59,7 +59,7 @@ int string_size(const char* string)
 
 MY_STRING my_string_init_c_string(const char* c_string)
 {
-
+	int i;
 	My_String* pStr;
 	pStr = (My_String*)malloc(sizeof(My_String));
 
@@ -73,6 +73,10 @@ MY_STRING my_string_init_c_string(const char* c_string)
 			free(pStr);
 			pStr = NULL;
 		}
+
+		for (i = 0; i < pStr->capacity; i++) {
+			pStr->data[i] = c_string[i];
+		}
 	}
 	return pStr;
 }
@@ -84,7 +88,7 @@ int my_string_get_capacity(MY_STRING hMy_string)
 {
 	My_String* pStr = (My_String*)hMy_string;
 
-	if (pStr == NULL || pStr->size == 0)
+	if (pStr == NULL)
 		return 0;
 	else
 		return pStr->capacity;
@@ -97,7 +101,7 @@ int my_string_get_size(MY_STRING hMy_string)
 {
 	My_String* pStr = (My_String*)hMy_string;
 
-	if (pStr == NULL || pStr->size == 0)
+	if (pStr == NULL)
 		return 0;
 	else
 		return pStr->size;
@@ -116,17 +120,21 @@ int my_string_get_size(MY_STRING hMy_string)
 
 int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string)
 {
-	char* pLeft = (char*)hLeft_string;
-	char* pRight = (char*)hRight_string;
+	My_String* pLeft = (My_String*)hLeft_string;
+	My_String* pRight = (My_String*)hRight_string;
 
-	for( ; *pLeft == *pRight; pLeft++, pRight++)
-	{
-		if (*pLeft == '\0')
-		{
-			return 0;
+	int i;
+	for (i = 0; i < pLeft->size && i < pRight->size; i++) {
+		if (pLeft->data[i] < pRight->data[i]) {
+			return -1;
+			break;
 		}
-	}
-		return *pLeft - *pRight;
+		else if (pLeft->data[i] > pRight->data[i]) {
+			return 1;
+			break;
+		}
+}
+	return 0;
 }
 
 // Precondition: phMy_string holds the address of a valid handle to a MY_STRING
@@ -141,24 +149,6 @@ void my_string_destroy(MY_STRING* phMy_string)
 	
 	free(pStr->data);
 	pStr->data = NULL;
-
-	free(pStr);
-	pStr = NULL;
-	*phMy_string = NULL;
-}
-
-// Precondition: phMy_string holds the address of a valid handle to a MY_STRING
-//  object.
-// Postcondition: The memory used fo the MY_STRING object has be reclaimed by
-//  the system and the handle referred to by the pointer phMy_string has been
-//  set to NULL.
-
-void my_string_highlevel_destroy(MY_STRING* phMy_string)
-{
-	My_String* pStr = (My_String*)*phMy_string;
-
-	// This function is necessary because not all test functions produce
-	// a valid malloced set of data memory.
 
 	free(pStr);
 	pStr = NULL;
