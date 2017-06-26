@@ -143,7 +143,7 @@ int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string)
 //  the system and the handle referred to by the pointer phMy_string has been
 //  set to NULL.
 
-void my_string_destroy(MY_STRING* phMy_string)
+void my_string_destroy(Item* phMy_string)
 {
 	My_String* pStr = (My_String*)*phMy_string;
 	
@@ -409,4 +409,24 @@ Boolean my_string_empty(MY_STRING hMy_string)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+void my_string_assignment(Item* pLeft, Item Right)
+{
+	My_String* pMy_Left = (My_String*)*pLeft;
+	My_String* pMy_Right = (My_String*)Right;
+	int i;
+	const char* temp;
+
+	temp = my_string_c_str((MY_STRING)Right);
+	if (pMy_Left == NULL) {
+		pMy_Left = my_string_init_c_string(temp);
+	}
+	else {
+		pMy_Left->size = 0;
+		for (i = 0; i < pMy_Right->size + 1; i++) {
+			my_string_push_back(pMy_Left, pMy_Right->data[i]);
+		}
+	}
+	*pLeft = pMy_Left;
 }

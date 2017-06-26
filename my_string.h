@@ -1,5 +1,5 @@
 #include "status.h"
-
+#include "generic.h"
 // Create a new handle type for our string type by simpily adding a line
 // that renames void* to be MY_STRING.
 
@@ -8,9 +8,7 @@ typedef void* MY_STRING;
 
 MY_STRING my_string_init_default(void);
 
-void my_string_destroy(MY_STRING* phMy_string);
-
-void my_string_highlevel_destroy(MY_STRING* phMy_string);
+void my_string_destroy(Item* phMy_string);
 
 MY_STRING my_string_init_c_string(const char* c_string);
 
